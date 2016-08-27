@@ -1,0 +1,157 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: local
+  gather_facts: yes
+  connection: local
+  vars: 
+    user: s.kupstaitis-dunkler
+    workspace_path: ~/workspace/private/
+    deploy_bashrc: yes
+    deploy_vimrc: yes
+    install_scientific_packages: yes
+    chefdk_deb_url: 'https://packages.chef.io/stable/ubuntu/12.04/chefdk_0.13.21-1_amd64.deb'
+    chefdk_deb_filename: /tmp/chefdk.deb
+    chefdk_deb_checksum: "sha256:8fa98e6a13719634c5bd8ee42182df08eada322fa2577d89013727968ef06d0f"
+    powerline_fonts_git: https://github.com/powerline/fonts.git
+    powerline_fonts_url: https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf
+    powerline_fonts_config_url: https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf
+    vundle_url: https://github.com/VundleVim/Vundle.vim.git
+    identity_filenames:
+      - vie.pem
+      - github.pem
+      - gitlab.pem
+      - energy.pem
+    packages_to_install: [
+        git-flow, gitk, automake, build-essential, tree, 
+        chromium-browser, docker.io, ipython, mosh, nodejs-legacy,
+        # vim-nox-py2 is to enable python2 in vim; for python3 support install
+        # vim-nox instead
+        npm, openjdk-8-jdk, ruby2.3-dev, python-dev, vim-nox-py2,
+        vagrant, terminator, cowsay, htop, bc, ranger, ngrep,
+        dtrx, dstat, libfreetype6-dev, libblas3, gfortran,
+        liblapack3, libblas-dev, liblapack-dev, libatlas-base-dev,
+        freeipa-client, sysstat, libsasl2-dev, virtualbox, krb5-user,
+        libkrb5-dev, golang
+        ]
+
+    pip_packages_to_install: [ pip, virtualenv, powerline-status ]
+    pip_packages_to_install_default: [ fabric, awscli, flake8, nose, vim_bridge, mock, "snakebite[kerberos]",
+        python-gitlab
+        ]
+    pip_packages_to_install_scientific: [
+        jupyter, numpy, scipy, pandas,
+        scikit-learn, scikit-image
+        ]
+    ruby_gems_to_install: [ kitchen-docker ]
+  tasks:
+    #- name: upgrade ubuntu packages
+    #  apt: upgrade=dist update_cache=yes cache_valid_time=6000
+    #  become: yes
+
+    - name: install ubuntu packages
+      apt: pkg={{ item }} state=installed
+      with_items: '{{packages_to_install}}'
+      become: yes
+
+    - name: install python modules
+      pip: name={{ item }}
+      with_items: '{{pip_packages_to_install}}'
+      become: yes
+
+    - name: install default venv
+      pip: name={{ item }} virtualenv=/home/{{ user }}/venvs/default
+      with_items: '{{pip_packages_to_install_default}}'
+
+    - name: install scientific venv
+      pip: name={{ item }} virtualenv=/home/{{ user }}/venvs/scientific virtualenv_site_packages=yes
+      with_items: '{{pip_packages_to_install_scientific}}'
+      when: '{{install_scientific_packages}}'
+   
+    - name: install Vundle
+      git: repo='{{ vundle_url }}' dest='/home/{{user}}/.vim/bundle/Vundle.vim'
+
+    - name: install node.js packages with npm
+      npm: name={{ item }} global=yes
+      with_items:
+        - azure-cli
+      become: yes
+
+    - name: deploy bashrc file
+      template: src=./templates/.bashrc.j2 dest=/home/{{ user }}/.bashrc owner={{ user }} group={{ user }}
+      when: '{{deploy_bashrc}}'
+      
+    - name: deploy vimrc file
+      copy: src=./files/.vimrc dest=/home/{{ user }}/.vimrc owner={{ user }} group={{ user }}
+      when: '{{deploy_vimrc}}'
+      
+    - name: install Vundle plugins
+      command: "vim -E -s -c 'source /home/{{user}}/.vimrc' -c PluginInstall -c qa"
+      register: vundle_install
+      failed_when: vundle_install.rc > 1
+      changed_when: vundle_install.rc == 1
+
+    - name: create ssh directory
+      file: path=/home/{{ user }}/.ssh state=directory
+      
+    - name: deploy ssh config file
+      template: src=./templates/ssh_config.j2 dest=/home/{{ user }}/.ssh/config owner={{ user }} group={{ user }}
+
+    - name: download powerline fonts from git
+      git: repo='{{ powerline_fonts_git }}' dest='{{ workspace_path }}/fonts'
+      notify:
+        - install powerline fonts
+
+    - name: download powerline fonts from url
+      get_url: url={{ powerline_fonts_url }} dest=/usr/share/fonts/ validate_certs=no
+      notify:
+        - update font cache
+      become: yes
+
+    - name: download powerline fonts config from url
+      get_url: url={{ powerline_fonts_config_url }} dest=/etc/fonts/conf.d/ validate_certs=no
+      notify:
+        - update font cache
+      become: yes
+
+    - name: check if chefdk is installed
+      command: dpkg-query -W chefdk
+      register: is_chefdk_installed
+      failed_when: is_chefdk_installed.rc > 1
+      changed_when: is_chefdk_installed.rc == 1
+      notify:
+        - download chefdk
+
+    - name: use ruby2.3 per default
+      file: path=/usr/bin/ruby src=/usr/bin/ruby2.3 state=link
+      become: yes
+      
+    - name: use gem2.3 per default
+      file: path=/usr/bin/gem src=/usr/bin/gem2.3 state=link
+      become: yes
+
+    - name: install ruby gems
+      gem: name={{ item  }} state=latest
+      with_items: '{{ruby_gems_to_install}}'
+      become: yes
+
+    - name: set git configs
+      copy: src=./files/.gitconfig dest=/home/{{ user }}/.gitconfig owner={{ user }} group={{ user }}
+      
+
+  handlers:
+    - name: install powerline fonts
+      command: "{{ workspace_path }}/fonts/install.sh"
+      become: yes
+
+    - name: download chefdk
+      get_url: url='{{chefdk_deb_url}}' dest='{{chefdk_deb_filename}}' checksum='{{chefdk_deb_checksum}}'
+      notify:
+        - install chefdk
+
+    - name: install chefdk
+      apt: deb="{{chefdk_deb_filename}}"
+      become: yes
+
+    - name: update font cache
+      command: fc-cache -vf /usr/share/fonts  
+

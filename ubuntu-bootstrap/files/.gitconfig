@@ -1,0 +1,14 @@
+[user]
+	email = stefan.dun@gmail.com
+	name = Stefan K. Dunkler
+[credential]
+	helper = cache --timeout=6000
+[alias]
+  co = checkout
+  ci = commit -m
+  cam = commit -a -m
+  st = status
+  br = branch
+  hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+  type = cat-file -t
+  dump = cat-file -p

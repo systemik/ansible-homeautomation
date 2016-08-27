@@ -1,0 +1,5 @@
+Host *
+ServerAliveInterval 100
+{% for identity_filename in identity_filenames %}
+IdentityFile ~/.ssh/{{ identity_filename }}
+{% endfor %}
