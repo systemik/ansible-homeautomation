@@ -48,7 +48,7 @@
 
     - name: install packages
       apt: pkg={{ item }} state=installed update_cache={{ update_cache }}
-      with_items: packages_to_install
+      with_items: "{{packages_to_install}}"
   
     #- name: install python modules with pip
      # pip: name={{ item }}
