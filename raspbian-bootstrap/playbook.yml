@@ -1,6 +1,7 @@
 #!/usr/bin/env ansible-playbook
 ---
-- gather_facts: yes
+- hosts: all
+  gather_facts: yes
   vars:
     wifi:
       ssid: "ToutLaHaut"
