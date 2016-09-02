@@ -63,10 +63,10 @@
 
     #- name: install amazon iot device sdk
      # git: repo=https://github.com/aws/aws-iot-device-sdk-js.git dest=/home/pi/aws-iot-device-sdk-js
-     - command: curl -sSL get.docker.com | sh
-       args:
-         chdir: /home/pi/
-         #creates: /path/to/database
+     #- command: curl -sSL get.docker.com | sh
+     #  args:
+     #    chdir: /home/pi/
+     #    #creates: /path/to/database
       
   handlers:
     - name: reboot
