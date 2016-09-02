@@ -7,9 +7,9 @@
       ssid: "ToutLaHaut"
       password: diwishighesoakilvod0
     packages_to_install: [ git, automake, build-essential, 
-        libtool, libx11-dev, xinput, autoconf, libx11-dev, libxi-dev, x11proto-input-dev
-        ]
-    pip_packages_to_install: [  ]
+        libtool, libx11-dev, xinput, autoconf, libx11-dev, libxi-dev, x11proto-input-dev,
+        python-pyaudio, python3-pyaudio, swig, portaudio, sox]
+    pip_packages_to_install: [ pyaudio ]
     npm_packages_to_install: [  ]
     update_cache: yes
   sudo: yes
@@ -34,6 +34,9 @@
          dtparam=spi=on
          dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900
          dtoverlay=w1-gpio-pullup,gpiopin=4,extpullup=1
+    # Example git checkout from Ansible Playbooks
+    - git: repo=https://github.com/Kitt-AI/snowboy.git
+       dest=/home/pi/snowboy
 
     #- name: install python-apt
       #command: apt-get install python-apt
@@ -60,6 +63,10 @@
 
     #- name: install amazon iot device sdk
      # git: repo=https://github.com/aws/aws-iot-device-sdk-js.git dest=/home/pi/aws-iot-device-sdk-js
+     - command: curl -sSL get.docker.com | sh
+       args:
+         chdir: /home/pi/
+         #creates: /path/to/database
       
   handlers:
     - name: reboot
