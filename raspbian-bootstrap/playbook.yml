@@ -8,7 +8,7 @@
       password: diwishighesoakilvod0
     packages_to_install: [ git, automake, build-essential, 
         libtool, libx11-dev, xinput, autoconf, libx11-dev, libxi-dev, x11proto-input-dev,
-        python-pyaudio, python3-pyaudio, swig, portaudio, sox]
+        python-pyaudio, python3-pyaudio, swig, sox]
     pip_packages_to_install: [ pyaudio ]
     npm_packages_to_install: [  ]
     update_cache: yes
