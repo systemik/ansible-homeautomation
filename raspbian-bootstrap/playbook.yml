@@ -5,7 +5,7 @@
   vars:
     wifi:
       ssid: "ToutLaHaut"
-      password: diwishighesoakilvod0
+      password: diwishighjhjesoakilvod0
     packages_to_install: [ git, automake, build-essential, 
         libtool, libx11-dev, xinput, autoconf, libx11-dev, libxi-dev, x11proto-input-dev,
         python-pyaudio, python3-pyaudio, swig, sox]
